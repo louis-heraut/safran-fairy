@@ -8,11 +8,14 @@ get_ipython().run_line_magic('autoreload', '2')
 
 
 import json
+from pathlib import Path
 
 from safran_downloader import sync
 from safran_clean import clean_files
 from safran_unzip import decompress_all
-from safran_process import split_all
+from safran_split import split_all
+from safran_convert import convert_files
+from safran_concatenate import check_new_historical, check_new_pevious, check_new_latest
 
 
 ## CONFIGURATION _______________
@@ -29,6 +32,8 @@ STATE_FILE = config['state_file']
 DOWNLOAD_DIR = config['download_dir']
 RAW_DIR = config['raw_dir']
 SPLIT_DIR = config['split_dir']
+CONVERT_DIR = config['convert_dir']
+OUTPUT_DIR = config['output_dir']
 
 METEO_API_URL = config['meteo_api_url']
 METEO_DATASET_ID = config['meteo_dataset_id']
@@ -54,13 +59,28 @@ def main():
     clean_files(RAW_DIR)
         
     # 3. Traitement
-    # decompressed_files = [Path("SAFRAN_data-raw/QUOT_SIM2_previous-2020-202601.csv"),
-                          # Path("SAFRAN_data-raw/QUOT_SIM2_latest-20260101-20260214.csv")]
-    split_all(RAW_DIR, SPLIT_DIR, decompressed_files)
+    splited_files = split_all(RAW_DIR, SPLIT_DIR, decompressed_files)
     clean_files(SPLIT_DIR)
+
+    # 4. Conversion NetCDF
+    ### tmp
+    splited_files = Path(SPLIT_DIR).glob("*.parquet")
+    ###
+
+    converted_files = convert_files(SPLIT_DIR, CONVERT_DIR, splited_files)
+
+
+    # 5. Concaténer
+    new_historical = check_new_historical(splited_files)
+    if new_historical:
+        combine_historical(SPLIT_DIR, OUTPUT_DIR, splited_files)
         
-    print("\n🎉 Pipeline terminé!")
 
 
+
+
+
+
+        
 # if __name__ == "__main__":
 # main()

@@ -67,3 +67,6 @@ def split_all(RAW_DIR, SPLIT_DIR, decompressed_files=None):
     
     print(f"\n🎉 {split_count} fichier(s) traité(s)")
     return split_count
+
+
+

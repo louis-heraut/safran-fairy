@@ -34,11 +34,9 @@ def clean_files(directory):
         max_date = max(dates)
         files_to_delete = [f for f, d in zip(files, dates) if d < max_date]
 
-        print(files_to_delete)
-        
         for file in files_to_delete:
             print(f"   🗑️  {file.name}")
-            # file.unlink()
+            file.unlink()
         
         print(f"   📊 {len(files_to_delete)} supprimé(s)")
 
