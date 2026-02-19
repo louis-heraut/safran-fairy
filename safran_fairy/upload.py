@@ -48,9 +48,14 @@ def upload(dataset_DOI: str,
            RDG_BASE_URL: str = os.getenv("RDG_BASE_URL"),
            RDG_API_TOKEN: str = os.getenv("RDG_API_TOKEN"),
            verbose: bool = True):
+
+    tprint("split", "small")
     
     if file_paths is None:
         file_paths = list(Path(OUTPUT_DIR).glob("*.nc"))
+    if not file_paths:
+        print("\n⚠️  Aucun fichier à uploader")
+        return []
     
     print("\nUPLOAD DATAVERSE")
     print(f"   Dataset: {dataset_DOI}")

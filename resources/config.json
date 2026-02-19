@@ -1,4 +1,5 @@
 {
+    "dev_mode": "True",
     "welcome_file": "welcome.txt",
     "state_file": "download_state.json",
     "metadata_variables_file": "safran-variables_2026-02-19.csv",
