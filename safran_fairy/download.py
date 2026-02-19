@@ -98,7 +98,7 @@ def download_file(resource, DOWNLOAD_DIR):
         return None
 
 
-def download(STATE_FILE, DOWNLOAD_DIR, METEO_API_URL, METEO_DATASET_ID):
+def download(STATE_FILE, DOWNLOAD_DIR, METEO_BASE_URL, METEO_DATASET_ID):
     """
     Synchronise les fichiers depuis l'API en téléchargeant uniquement ceux qui ont changé.
 
@@ -106,7 +106,7 @@ def download(STATE_FILE, DOWNLOAD_DIR, METEO_API_URL, METEO_DATASET_ID):
     télécharge les fichiers nouveaux ou modifiés, puis met à jour l'état.
 
     Args:
-        API_URL (str):      URL de l'API retournant la liste des ressources.
+        BASE_URL (str):      URL de l'API retournant la liste des ressources.
         STATE_FILE (str):   Chemin du fichier JSON de suivi des téléchargements.
                             Créé automatiquement au premier appel.
         DOWNLOAD_DIR (str): Dossier de destination pour les fichiers téléchargés.
@@ -125,7 +125,7 @@ def download(STATE_FILE, DOWNLOAD_DIR, METEO_API_URL, METEO_DATASET_ID):
 
     os.makedirs(DOWNLOAD_DIR, exist_ok=True)
     state = load_state(STATE_FILE)    
-    API_URL = METEO_API_URL + METEO_DATASET_ID + "/"
+    API_URL = METEO_BASE_URL + METEO_DATASET_ID + "/"
     resources = get_resources(API_URL)
     
     to_download = []

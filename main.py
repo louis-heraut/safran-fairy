@@ -12,7 +12,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from art import tprint
 
-from safran_fairy import download, decompress, split, convert, merge
+from safran_fairy import download, decompress, split, convert, merge, upload
 
 
 ## CONFIGURATION _______________
@@ -35,10 +35,10 @@ SPLIT_DIR = config['split_dir']
 CONVERT_DIR = config['convert_dir']
 OUTPUT_DIR = config['output_dir']
 
-METEO_API_URL = config['meteo_api_url']
+METEO_BASE_URL = config['meteo_base_url']
 METEO_DATASET_ID = config['meteo_dataset_id']
 
-RDG_API_URL = config['rdg_api_url']
+RDG_BASE_URL = config['rdg_base_url']
 RDG_DATASET_DOI = config['rdg_dataset_doi']
 RDG_API_TOKEN = os.getenv("RDG_API_TOKEN")
 
@@ -50,7 +50,7 @@ def main():
     
     # 1. Téléchargement
     downloaded_files = download(STATE_FILE, DOWNLOAD_DIR,
-                                METEO_API_URL, METEO_DATASET_ID)
+                                METEO_BASE_URL, METEO_DATASET_ID)
     
     if not downloaded_files:
         print("\n✨ Rien de nouveau à traiter!")
@@ -70,10 +70,16 @@ def main():
     merged_files = merge(CONVERT_DIR, OUTPUT_DIR, converted_files)
 
     # 6. Upload
-    upload_files_to_dataset(dataset_DOI=RDG_DATASET_DOI,
-                            file_paths=merged_files,
-                            RDG_API_URL=RDG_API_URL,
-                            RDG_API_TOKEN=RDG_API_TOKEN)
+    merged_files = list(Path(OUTPUT_DIR).glob("*.nc"))
+    file_categories = [[f.stem.split('_QUOT_SIM2_')[0],
+                        f.stem.split('_QUOT_SIM2_')[1].split('-')[0]] for f in merged_files]
+    
+    upload(dataset_DOI=RDG_DATASET_DOI,
+           file_paths=merged_files,
+           file_categories=file_categories,
+           OUTPUT_DIR=OUTPUT_DIR,
+           RDG_BASE_URL=RDG_BASE_URL,
+           RDG_API_TOKEN=RDG_API_TOKEN)
 
         
 # if __name__ == "__main__":

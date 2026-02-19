@@ -4,33 +4,73 @@ from datetime import datetime
 from art import tprint
 
 
-def clean(directory,
-          extensions=['.csv', '.csv.gz', '.parquet', '.nc'],
-          patterns = {
-            'latest': r'latest-(\d{8})-(\d{8})',
-            'previous': r'previous-(\d{4})-(\d{6})'
-          }):
+def clean_dataverse(dataset_DOI: str,
+                    RDG_BASE_URL: str = os.getenv("RDG_BASE_URL"),
+                    RDG_API_TOKEN: str = os.getenv("RDG_API_TOKEN"),
+                    patterns = {
+                        'latest': r'latest-(\d{8})-(\d{8})',
+                        'previous': r'previous-(\d{4})-(\d{6})'
+                    }):
     """
-    Supprime les fichiers obsolètes d'un dossier en ne gardant que le plus récent par type.
-
-    Pour chaque type défini dans patterns, identifie les fichiers correspondants
-    et supprime ceux dont la date (2ème groupe capturant) est inférieure au maximum.
-
-    Args:
-        directory (str | Path): Dossier à nettoyer.
-        extensions (list[str]): Extensions de fichiers à considérer.
-                                Défaut: ['.csv', '.csv.gz', '.parquet', '.nc']
-        patterns (dict[str, str]): Patterns regex par type de fichier.
-                                   La date de comparaison est extraite du 2ème groupe capturant.
-                                   Défaut: latest et previous.
-
-    Returns:
-        None
+    Supprime les fichiers obsolètes d'un dataset Dataverse en ne gardant que le plus récent par type.
     """
+    
+    print("\nNETTOYAGE DATAVERSE")
+    print(f"   Dataset: {dataset_DOI}")
+    
+    # Récupérer la liste des fichiers du dataset
+    url = f"{RDG_BASE_URL}/api/datasets/:persistentId/?persistentId={dataset_DOI}"
+    headers = {'X-Dataverse-key': RDG_API_TOKEN}
+    response = requests.get(url, headers=headers)
+    
+    if response.status_code != 200:
+        print(f"   ❌ Impossible de récupérer les fichiers: {response.text}")
+        return
+    
+    files_data = response.json()['data']['latestVersion']['files']
+    
+    for file_type, pattern in patterns.items():
+        print(f"\nRecherche de fichiers '{file_type}'...")
         
-    directory = Path(directory)
+        # Filtrer les fichiers qui matchent le pattern
+        matching_files = []
+        for file_info in files_data:
+            filename = file_info['dataFile']['filename']
+            if re.search(pattern, filename):
+                date = int(re.search(pattern, filename).group(2))
+                matching_files.append({
+                    'id': file_info['dataFile']['id'],
+                    'filename': filename,
+                    'date': date
+                })
+        
+        if not matching_files:
+            print(f"   - ℹ️ Aucun fichier trouvé")
+            continue
+        
+        # Identifier les fichiers à supprimer (tous sauf le plus récent)
+        max_date = max(f['date'] for f in matching_files)
+        files_to_delete = [f for f in matching_files if f['date'] < max_date]
+        
+        # Supprimer les fichiers obsolètes
+        deleted_count = 0
+        for file in files_to_delete:
+            delete_url = f"{RDG_BASE_URL}/api/files/{file['id']}"
+            del_response = requests.delete(delete_url, headers=headers)
+            
+            if del_response.status_code == 204:
+                print(f"   - 🗑️ {file['filename']}")
+                deleted_count += 1
+            else:
+                print(f"   - ❌ Échec suppression {file['filename']}: {del_response.text}")
+        
+        print(f"   - 📊 {deleted_count}/{len(files_to_delete)} fichier(s) supprimé(s)")
 
-    print("\nNETTOYAGE")
+
+def clean_local(directory, extensions, patterns):
+    """Version locale de ton code actuel"""
+    directory = Path(directory)
+    print("\nNETTOYAGE LOCAL")
     
     for file_type, pattern in patterns.items():
         print(f"\nRecherche de fichiers '{file_type}'...")
@@ -46,11 +86,28 @@ def clean(directory,
         dates = [int(re.search(pattern, f.name).group(2)) for f in files]
         max_date = max(dates)
         files_to_delete = [f for f, d in zip(files, dates) if d < max_date]
-
         for file in files_to_delete:
             print(f"   - 🗑️ {file.name}")
             file.unlink()
         
         print(f"   - 📊 {len(files_to_delete)} fichier(s) supprimé(s)")
 
-        
+
+def clean(directory=None,
+          dataset_DOI=None,
+          RDG_BASE_URL: str = os.getenv("RDG_BASE_URL"),
+          RDG_API_TOKEN: str = os.getenv("RDG_API_TOKEN"),
+          extensions=['.csv', '.csv.gz', '.parquet', '.nc'],
+          patterns = {
+            'latest': r'latest-(\d{8})-(\d{8})',
+            'previous': r'previous-(\d{4})-(\d{6})'
+          }):
+    """
+    Nettoie un dossier local ET/OU un dataset Dataverse.
+    """
+    
+    if directory:
+        clean_local(directory, extensions, patterns)
+    
+    if dataset_DOI:
+        clean_dataverse(dataset_DOI, RDG_BASE_URL, RDG_API_TOKEN, patterns)

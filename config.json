@@ -6,8 +6,8 @@
     "split_dir": "02_SAFRAN-data_split",
     "convert_dir": "03_SAFRAN-data_convert",
     "output_dir": "04_SAFRAN-data_output",
-    "meteo_api_url": "https://www.data.gouv.fr/api/1/datasets/",
+    "meteo_base_url": "https://www.data.gouv.fr/api/1/datasets/",
     "meteo_dataset_id": "6569b27598256cc583c917a7",
-    "rdg_api_url": "https://entrepot.recherche.data.gouv.fr",
-    "rdg_dataset_doi": ""
+    "rdg_base_url": "https://entrepot.recherche.data.gouv.fr",
+    "rdg_dataset_doi": "doi:10.57745/BAZ12C"
 } 
