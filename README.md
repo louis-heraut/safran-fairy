@@ -16,7 +16,7 @@ Afin d'améliorer la réutilisabilité et en raison d'une accessibilité et d'un
 *in dev* – Ce projet ajoute aux données d'origine l'évapotranspiration calculée selon la [méthode de Hargreaves](https://doi.org/10.13031/2013.26773) à partir des températures minimales et maximales de la réanalyse SAFRAN afin de continuer de répondre au besoin exprimé dans le cadre du projet [Explore2](https://entrepot.recherche.data.gouv.fr/dataverse/explore2).
 
 
-## Stratégie de mise à jour
+### Stratégie de mise à jour
 Trois fichiers NetCDF par variable pour optimiser la performance et la fraîcheur des données :
 
 | Type | Description | Période couverte | Fréquence MAJ | Stabilité |
@@ -26,30 +26,24 @@ Trois fichiers NetCDF par variable pour optimiser la performance et la fraîcheu
 | **latest** | Données les plus récentes | N-10 ans → aujourd'hui | Quotidienne | ⚡ Mise à jour quotidienne |
 
 
-## Structure des données
-```
-00_SAFRAN-data_download/     # Fichiers .csv.gz bruts téléchargés
-01_SAFRAN-data_raw/          # Fichiers .csv décompressés
-02_SAFRAN-data_split/        # Fichiers .parquet par variable
-03_SAFRAN-data_convert/      # Fichiers .nc individuels
-04_SAFRAN-data_output/       # Fichiers .nc fusionnés (historical/previous/latest)
-```
+### Variables disponibles
+26 variables climatiques quotidiennes sur grille Lambert II étendu (8 km) :
 
+| Variable | Description | Unité |
+|----------|-------------|-------|
+| `PRENEI` | Précipitations solides | mm |
+| `PRELIQ` | Précipitations liquides | mm |
+| `T` | Température moyenne | °C |
+| `TINF_H` | Température minimale | °C |
+| `TSUP_H` | Température maximale | °C |
+| `FF` | Vent moyen | m/s |
+| `HU` | Humidité relative | % |
+| ... | ... | ... |
 
-## Architecture
-```
-safran_fairy/
-├── download.py      # Téléchargement depuis meteo.data.gouv.fr
-├── decompress.py    # Extraction des .csv.gz
-├── split.py         # Découpage par variable
-├── convert.py       # Conversion CSV → NetCDF
-├── merge.py         # Fusion temporelle
-├── upload.py        # Publication Dataverse
-└── clean.py         # Nettoyage des anciennes versions
-```
+Voir `resources/safran_variables.csv` pour la liste complète.
+
 
 ## Installation rapide
-
 ### Prérequis
 - Python 3.10+
 - NCO (NetCDF Operators) : `sudo apt install nco`
@@ -62,13 +56,17 @@ cd safran-fairy
 
 # Installation automatique
 make install
+
+# Installation manuelle
+python -m venv .python_env
+source .python_env/bin/activate
+pip install -r requirements.txt
 ```
 
 Voir [INSTALL.md](INSTALL.md) pour l'installation détaillée sur serveur Linux.
 
 
 ## Utilisation
-
 ### Exécution manuelle
 ```bash
 # Pipeline complet
@@ -93,25 +91,7 @@ sudo journalctl -u safran-sync.service -f
 
 Le service s'exécute quotidiennement à 02:00 UTC.
 
-
-## Variables disponibles
-26 variables climatiques quotidiennes sur grille Lambert II étendu (8 km) :
-
-| Variable | Description | Unité |
-|----------|-------------|-------|
-| `PRENEI` | Précipitations solides | mm |
-| `PRELIQ` | Précipitations liquides | mm |
-| `T` | Température moyenne | °C |
-| `TINF_H` | Température minimale | °C |
-| `TSUP_H` | Température maximale | °C |
-| `FF` | Vent moyen | m/s |
-| `HU` | Humidité relative | % |
-| ... | ... | ... |
-
-Voir `resources/safran_variables.csv` pour la liste complète.
-
-
-## Monitoring
+### Monitoring
 ```bash
 # Logs en temps réel
 make logs
@@ -123,18 +103,26 @@ make status
 make last-run
 ```
 
-
-## Développement
-```bash
-# Environnement virtuel
-python -m venv .python_env
-source .python_env/bin/activate
-pip install -r requirements.txt
+### Architecture
+```
+safran_fairy/
+├── download.py      # Téléchargement depuis meteo.data.gouv.fr
+├── decompress.py    # Extraction des .csv.gz
+├── split.py         # Découpage par variable
+├── convert.py       # Conversion CSV → NetCDF
+├── merge.py         # Fusion temporelle
+├── upload.py        # Publication Dataverse
+└── clean.py         # Nettoyage des anciennes versions
 ```
 
-
-## Licence
-Voir [LICENSE](LICENSE)
+### Structure des données
+```
+00_SAFRAN-data_download/     # Fichiers .csv.gz bruts téléchargés
+01_SAFRAN-data_raw/          # Fichiers .csv décompressés
+02_SAFRAN-data_split/        # Fichiers .parquet par variable
+03_SAFRAN-data_convert/      # Fichiers .nc individuels
+04_SAFRAN-data_output/       # Fichiers .nc fusionnés (historical/previous/latest)
+```
 
 
 ## Contact
