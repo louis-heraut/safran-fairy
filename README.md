@@ -132,11 +132,11 @@ safran_fairy/
 
 ### Structure des données
 ```
-00_download/     # Fichiers .csv.gz bruts téléchargés
-01_raw/          # Fichiers .csv décompressés
-02_split/        # Fichiers .parquet par variable
-03_convert/      # Fichiers .nc individuels
-04_output/       # Fichiers .nc fusionnés (historical/previous/latest)
+00_data-download/     # Fichiers .csv.gz bruts téléchargés
+01_data-raw/          # Fichiers .csv décompressés
+02_data-split/        # Fichiers .parquet par variable
+03_data-convert/      # Fichiers .nc individuels
+04_data-output/       # Fichiers .nc fusionnés (historical/previous/latest)
 ```
 
 

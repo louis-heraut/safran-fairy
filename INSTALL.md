@@ -50,11 +50,11 @@ nano config.json
 ```
 Remplir avec vos paramètres pour la prod :
 ```bash
-"download_dir": "/var/lib/safran-fairy/00_download",
-"raw_dir": "/var/lib/safran-fairy/01_raw",
-"split_dir": "/var/lib/safran-fairy/02_split",
-"convert_dir": "/var/lib/safran-fairy/03_convert",
-"output_dir": "/var/lib/safran-fairy/04_output"
+"download_dir": "/var/lib/safran-fairy/00_data-download",
+"raw_dir": "/var/lib/safran-fairy/01_data-raw",
+"split_dir": "/var/lib/safran-fairy/02_data-split",
+"convert_dir": "/var/lib/safran-fairy/03_data-convert",
+"output_dir": "/var/lib/safran-fairy/04_data-output"
 ```
 
 ### 4. Test manuel
@@ -155,10 +155,10 @@ sudo journalctl -u safran-sync.service -p err
 du -sh /var/lib/safran-fairy/*/
 
 # Nombre de fichiers traités
-ls /var/lib/safran-fairy/04_output/*.nc | wc -l
+ls /var/lib/safran-fairy/04_data-output/*.nc | wc -l
 
 # Dernière mise à jour
-stat -c '%y' /var/lib/safran-fairy/04_output/*.nc | sort | tail -1
+stat -c '%y' /var/lib/safran-fairy/04_data-output/*.nc | sort | tail -1
 ```
 
 
