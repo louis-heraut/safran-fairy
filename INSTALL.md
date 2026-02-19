@@ -63,7 +63,7 @@ Remplir avec vos paramètres pour la prod :
 make run
 
 # Vérifier les données générées
-ls -lh /var/lib/safran-fairy/04_output/
+ls -lh /var/lib/safran-fairy/04_data-output/
 ```
 
 ### 5. Installation du service systemd
