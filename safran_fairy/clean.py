@@ -1,5 +1,7 @@
-from pathlib import Path
+import os
 import re
+import requests
+from pathlib import Path
 from datetime import datetime
 from art import tprint
 
@@ -7,6 +9,7 @@ from art import tprint
 def clean_dataverse(dataset_DOI: str,
                     RDG_BASE_URL: str = os.getenv("RDG_BASE_URL"),
                     RDG_API_TOKEN: str = os.getenv("RDG_API_TOKEN"),
+                    extensions=['.csv', '.csv.gz', '.parquet', '.nc'],
                     patterns = {
                         'latest': r'latest-(\d{8})-(\d{8})',
                         'previous': r'previous-(\d{4})-(\d{6})'
@@ -15,7 +18,7 @@ def clean_dataverse(dataset_DOI: str,
     Supprime les fichiers obsolètes d'un dataset Dataverse en ne gardant que le plus récent par type.
     """
     
-    print("\nNETTOYAGE DATAVERSE")
+    print("\nNETTOYAGE")
     print(f"   Dataset: {dataset_DOI}")
     
     # Récupérer la liste des fichiers du dataset
@@ -32,10 +35,17 @@ def clean_dataverse(dataset_DOI: str,
     for file_type, pattern in patterns.items():
         print(f"\nRecherche de fichiers '{file_type}'...")
         
-        # Filtrer les fichiers qui matchent le pattern
+        # Filtrer les fichiers qui matchent le pattern ET l'extension
         matching_files = []
         for file_info in files_data:
             filename = file_info['dataFile']['filename']
+            
+            # Vérifier l'extension
+            file_ext = ''.join(Path(filename).suffixes)
+            if file_ext not in extensions:
+                continue
+            
+            # Vérifier le pattern
             if re.search(pattern, filename):
                 date = int(re.search(pattern, filename).group(2))
                 matching_files.append({
@@ -57,20 +67,19 @@ def clean_dataverse(dataset_DOI: str,
         for file in files_to_delete:
             delete_url = f"{RDG_BASE_URL}/api/files/{file['id']}"
             del_response = requests.delete(delete_url, headers=headers)
-            
-            if del_response.status_code == 204:
+            if del_response.status_code in [200, 204]:  # <-- ajout du 200
                 print(f"   - 🗑️ {file['filename']}")
                 deleted_count += 1
             else:
                 print(f"   - ❌ Échec suppression {file['filename']}: {del_response.text}")
-        
+
         print(f"   - 📊 {deleted_count}/{len(files_to_delete)} fichier(s) supprimé(s)")
 
 
 def clean_local(directory, extensions, patterns):
     """Version locale de ton code actuel"""
     directory = Path(directory)
-    print("\nNETTOYAGE LOCAL")
+    print("\nNETTOYAGE")
     
     for file_type, pattern in patterns.items():
         print(f"\nRecherche de fichiers '{file_type}'...")
@@ -95,19 +104,25 @@ def clean_local(directory, extensions, patterns):
 
 def clean(directory=None,
           dataset_DOI=None,
-          RDG_BASE_URL: str = os.getenv("RDG_BASE_URL"),
-          RDG_API_TOKEN: str = os.getenv("RDG_API_TOKEN"),
           extensions=['.csv', '.csv.gz', '.parquet', '.nc'],
           patterns = {
             'latest': r'latest-(\d{8})-(\d{8})',
             'previous': r'previous-(\d{4})-(\d{6})'
-          }):
+          },
+          RDG_BASE_URL: str = os.getenv("RDG_BASE_URL"),
+          RDG_API_TOKEN: str = os.getenv("RDG_API_TOKEN")):
     """
     Nettoie un dossier local ET/OU un dataset Dataverse.
     """
     
     if directory:
-        clean_local(directory, extensions, patterns)
+        clean_local(directory=directory,
+                    extensions=extensions,
+                    patterns=patterns)
     
     if dataset_DOI:
-        clean_dataverse(dataset_DOI, RDG_BASE_URL, RDG_API_TOKEN, patterns)
+        clean_dataverse(dataset_DOI=dataset_DOI,
+                        extensions=extensions,
+                        patterns=patterns,
+                        RDG_BASE_URL=RDG_BASE_URL,
+                        RDG_API_TOKEN=RDG_API_TOKEN)

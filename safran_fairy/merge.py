@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 from pathlib import Path
 import xarray as xr
@@ -67,7 +68,7 @@ def merge_by_type(file_type, source_getter, base_getter, CONVERT_DIR, OUTPUT_DIR
     
     converted_type_files = source_getter(converted_files)
     if len(converted_type_files) == 0:
-        return
+        return []
 
     all_files = source_getter(list(CONVERT_DIR.glob("*.nc")))
     all_variables = get_variables(all_files)
@@ -85,7 +86,9 @@ def merge_by_type(file_type, source_getter, base_getter, CONVERT_DIR, OUTPUT_DIR
 
     merged_files = []
     
-    for var in unique_vars:    
+    for i, var in enumerate(unique_vars, 1):
+        print(f"\n[{i}/{len(unique_vars)}]")
+        
         var_base = [f for f, v in zip(base_files, base_variables) if v == var]
         var_new = [f for f, v in zip(files_to_update, variables_to_update) if v == var]
         var_files = var_base + var_new

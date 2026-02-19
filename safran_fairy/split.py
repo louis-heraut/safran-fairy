@@ -65,7 +65,8 @@ def split(RAW_DIR, SPLIT_DIR, decompressed_files=None):
     print("SPLIT")
 
     splited_files = []
-    for file in decompressed_files:
+    for i, file in enumerate(decompressed_files, 1):
+        print(f"\n[{i}/{len(decompressed_files)}]")
         output_files = split_file(file, SPLIT_DIR)
         splited_files.append(output_files)
 

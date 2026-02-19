@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 from pathlib import Path
 import xarray as xr
@@ -6,37 +7,97 @@ from art import tprint
 from .clean import clean
 
 
-def create_netcdf(file, CONVERT_DIR):
+def create_netcdf(file, CONVERT_DIR, metadata_variables):
     var = file.stem.split('_QUOT_SIM2')[0]
     print(f"\n🌐 Conversion NetCDF: {file.name}")
     print(f"   → variable: {var}")
-
+    
     data = pd.read_parquet(file)
     data = data.rename(columns={"LAMBX": "L2_X", "LAMBY": "L2_Y", "DATE": "time"})
     data['L2_X'] = data['L2_X'] * 100
     data['L2_Y'] = data['L2_Y'] * 100
     data['time'] = pd.to_datetime(data['time'], format='%Y%m%d')
-
+    
     print(f"   → {len(data['time'].unique())} pas de temps | {data['L2_X'].nunique()}x{data['L2_Y'].nunique()} points de grille")
-
+    
     ds = (data.set_index(['time', 'L2_Y', 'L2_X'])
               .to_xarray()
               .rename({'L2_Y': 'y', 'L2_X': 'x'}))
+    
+    # Métadonnées globales
     ds.attrs['crs'] = 'EPSG:27572'
-
+    ds.attrs['grid_mapping_name'] = 'lambert_conformal_conic'
+    ds.attrs['spatial_resolution'] = '8 km (0.072°)'
+    ds.attrs['projection'] = 'Lambert II étendu'
+    ds.attrs['source'] = 'SAFRAN-ISBA-MODCOU (SIM2)'
+    ds.attrs['institution'] = 'Météo-France'
+    
+    # Métadonnées des coordonnées
+    ds['x'].attrs = {
+        'standard_name': 'projection_x_coordinate',
+        'long_name': 'x coordinate of projection (Lambert II étendu)',
+        'units': 'm',
+        'axis': 'X'
+    }
+    
+    ds['y'].attrs = {
+        'standard_name': 'projection_y_coordinate',
+        'long_name': 'y coordinate of projection (Lambert II étendu)',
+        'units': 'm',
+        'axis': 'Y'
+    }
+    
+    ds['time'].attrs = {
+        'standard_name': 'time',
+        'long_name': 'time',
+        'axis': 'T'
+    }
+    
+    # Variable CRS
+    ds['crs'] = xr.DataArray(
+        data=0,
+        attrs={
+            'grid_mapping_name': 'lambert_conformal_conic',
+            'longitude_of_central_meridian': 2.337229,
+            'latitude_of_projection_origin': 46.8,
+            'standard_parallel': [45.898919, 47.696014],
+            'false_easting': 600000.0,
+            'false_northing': 2200000.0,
+            'semi_major_axis': 6378249.2,
+            'semi_minor_axis': 6356515.0,
+            'inverse_flattening': 293.46602,
+            'spatial_ref': 'EPSG:27572'
+        }
+    )
+    
+    # Métadonnées de la variable depuis le CSV
+    if var in metadata_variables.index:
+        var_meta = metadata_variables.loc[var]
+        ds[var].attrs['long_name'] = var_meta['description']
+        ds[var].attrs['units'] = var_meta['unite']
+        if pd.notna(var_meta['precision']):
+            ds[var].attrs['precision'] = var_meta['precision']
+        if pd.notna(var_meta['periode_agregation']):
+            ds[var].attrs['aggregation_period'] = var_meta['periode_agregation']
+        if pd.notna(var_meta['methode_agregation']):
+            ds[var].attrs['aggregation_method'] = var_meta['methode_agregation']
+        ds[var].attrs['grid_mapping'] = 'crs'
+    
     output_file = CONVERT_DIR / file.with_suffix('.nc').name
     encoding = {
         var: {'zlib': True, 'complevel': 4, 'dtype': 'float32'},
-        'time': {'units': 'days since 1970-01-01 00:00:00', 'calendar': 'standard', 'dtype': 'float64'}
+        'time': {'units': 'days since 1970-01-01 00:00:00',
+                 'calendar': 'standard', 'dtype': 'float64'}
     }
-
+    
     ds.to_netcdf(output_file, encoding=encoding, unlimited_dims=['time'])
-
     print(f"   💾 {output_file.name}")
+    
     return output_file
 
 
-def convert(SPLIT_DIR, CONVERT_DIR, splited_files=None):
+def convert(SPLIT_DIR, CONVERT_DIR, metadata_variables,
+            splited_files=None):
     """
     Convertit les fichiers Parquet en fichiers NetCDF géoréférencés.
 
@@ -55,21 +116,24 @@ def convert(SPLIT_DIR, CONVERT_DIR, splited_files=None):
         - CRS : EPSG:27572 (Lambert II étendu).
         - Compression : zlib niveau 4, variables en float32, time en float64.
     """
-    
-    tprint("convert", "small")
-    
+        
     SPLIT_DIR = Path(SPLIT_DIR)
     CONVERT_DIR = Path(CONVERT_DIR)
     CONVERT_DIR.mkdir(parents=True, exist_ok=True)
 
     if splited_files is None:
         splited_files = list(Path(SPLIT_DIR).glob("*.parquet"))
+    else:
+        splited_files = [f for sublist in splited_files for f in sublist]
 
+    tprint("convert", "small")
     print("CONVERSION")
         
     converted_files = []
-    for file in splited_files:
-        output_file = create_netcdf(file, CONVERT_DIR)       
+    for i, file in enumerate(splited_files, start=1):
+        print(f"\n[{i}/{len(splited_files)}]")
+        output_file = create_netcdf(file, CONVERT_DIR,
+                                    metadata_variables)       
         converted_files.append(output_file)
 
     clean(CONVERT_DIR)

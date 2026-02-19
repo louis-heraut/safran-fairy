@@ -1,7 +1,4 @@
 #!/usr/bin/env python3
-"""
-Script principal : télécharge, dézippe, traite
-"""
 
 get_ipython().run_line_magic('load_ext', 'autoreload')
 get_ipython().run_line_magic('autoreload', '2')
@@ -12,11 +9,12 @@ from pathlib import Path
 from dotenv import load_dotenv
 from art import tprint
 
-from safran_fairy import download, decompress, split, convert, merge, upload
+from safran_fairy import download, decompress, split, convert, merge, upload, clean
 
 
 ## CONFIGURATION _______________
-CONFIG_FILE = "config.json"
+RESOURCES_DIR = Path.cwd() / "resources"
+CONFIG_FILE = RESOURCES_DIR / "config.json"
 
 def load_config(CONFIG_FILE):
     """Charge la configuration depuis config.json"""
@@ -26,8 +24,10 @@ def load_config(CONFIG_FILE):
 config = load_config(CONFIG_FILE)
 load_dotenv()
 
-WELCOME_FILE = config['welcome_file']
-STATE_FILE = config['state_file']
+
+WELCOME_FILE = RESOURCES_DIR / config['welcome_file']
+STATE_FILE = RESOURCES_DIR / config['state_file']
+METADATA_VARIABLES_FILE = RESOURCES_DIR / config['metadata_variables_file']
 
 DOWNLOAD_DIR = config['download_dir']
 RAW_DIR = config['raw_dir']
@@ -41,6 +41,9 @@ METEO_DATASET_ID = config['meteo_dataset_id']
 RDG_BASE_URL = config['rdg_base_url']
 RDG_DATASET_DOI = config['rdg_dataset_doi']
 RDG_API_TOKEN = os.getenv("RDG_API_TOKEN")
+
+metadata_variables = pd.read_csv(METADATA_VARIABLES_FILE,
+                                 index_col='variable')
 
 
 ## RUN _____________
@@ -64,24 +67,27 @@ def main():
     splited_files = split(RAW_DIR, SPLIT_DIR, decompressed_files)
 
     # 4. Conversion NetCDF
-    converted_files = convert(SPLIT_DIR, CONVERT_DIR, splited_files)
+    converted_files = convert(SPLIT_DIR, CONVERT_DIR,
+                              metadata_variables, splited_files)
 
     # 5. Concaténer
     merged_files = merge(CONVERT_DIR, OUTPUT_DIR, converted_files)
 
     # 6. Upload
-    merged_files = list(Path(OUTPUT_DIR).glob("*.nc"))
+    merged_files = list(Path(OUTPUT_DIR).glob("*latest*.nc"))
+    merged_files= [Path("04_SAFRAN-data_output/DLI_QUOT_SIM2_previous-19580801-20260131.nc")]
     file_categories = [[f.stem.split('_QUOT_SIM2_')[0],
-                        f.stem.split('_QUOT_SIM2_')[1].split('-')[0]] for f in merged_files]
+                        f.stem.split('_QUOT_SIM2_')[1].split('-')[0]]
+                       for f in merged_files]
     
-    upload(dataset_DOI=RDG_DATASET_DOI,
-           file_paths=merged_files,
-           file_categories=file_categories,
-           OUTPUT_DIR=OUTPUT_DIR,
-           RDG_BASE_URL=RDG_BASE_URL,
-           RDG_API_TOKEN=RDG_API_TOKEN)
+    not_uploaded = upload(dataset_DOI=RDG_DATASET_DOI,
+                          OUTPUT_DIR=OUTPUT_DIR,
+                          file_paths=merged_files,
+                          file_categories=file_categories,
+                          overwrite=False,
+                          RDG_BASE_URL=RDG_BASE_URL,
+                          RDG_API_TOKEN=RDG_API_TOKEN)
 
-        
+    
 # if __name__ == "__main__":
-# main()
-
+    # main()

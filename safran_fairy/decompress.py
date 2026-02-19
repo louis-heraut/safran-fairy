@@ -1,5 +1,7 @@
+import os
 import gzip
 import shutil
+import requests
 from pathlib import Path
 from art import tprint
 
@@ -39,13 +41,14 @@ def decompress(DOWNLOAD_DIR, RAW_DIR, downloaded_files=None):
 
     Path(RAW_DIR).mkdir(parents=True, exist_ok=True)    
     if downloaded_files is None:
-        gz_files = list(Path(DOWNLOAD_DIR).glob("*.csv.gz"))
+        downloaded_files = list(Path(DOWNLOAD_DIR).glob("*.csv.gz"))
 
     print("DÉCOMPRESSION")
     
     decompressed_files = []    
-    for gz_file in gz_files:
-        output_file = decompress_file(gz_file, RAW_DIR)
+    for i, file in enumerate(downloaded_files, start=1):
+        print(f"\n[{i}/{len(downloaded_files)}]")
+        output_file = decompress_file(file, RAW_DIR)
         decompressed_files.append(output_file)
 
     clean(RAW_DIR)

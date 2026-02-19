@@ -1,6 +1,7 @@
 {
     "welcome_file": "welcome.txt",
     "state_file": "download_state.json",
+    "metadata_variables_file": "safran-variables_2026-02-19.csv",
     "download_dir": "00_SAFRAN-data_download",
     "raw_dir": "01_SAFRAN-data_raw",
     "split_dir": "02_SAFRAN-data_split",

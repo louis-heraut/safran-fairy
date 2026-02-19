@@ -138,7 +138,7 @@ def download(STATE_FILE, DOWNLOAD_DIR, METEO_BASE_URL, METEO_DATASET_ID):
             up_to_date.append(resource)
     
     print("ANALYSE")
-    print(f"   - {len(to_download)} fichier(s) à télécharger")
+    print(f"\n   - {len(to_download)} fichier(s) à télécharger")
     print(f"   - {len(up_to_date)} fichier(s) déjà à jour")
     
     if not to_download:
