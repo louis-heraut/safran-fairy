@@ -24,7 +24,7 @@ sudo chown $USER:$USER /opt/safran-fairy
 
 # Cloner le projet
 cd /opt/safran-fairy
-git clone <repo_url> .
+git clone https://github.com/louis-heraut/safran-fairy.git .
 
 # Installer les dépendances Python
 make install
