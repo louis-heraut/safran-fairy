@@ -1,5 +1,11 @@
 # SAFRAN Fairy
 
+<!-- badges: start -->
+[![Lifecycle: stable](https://img.shields.io/badge/lifecycle-stable-green)](https://lifecycle.r-lib.org/articles/stages.html)
+![](https://img.shields.io/github/last-commit/louis-heraut/safran-fairy)
+[![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](code_of_conduct.md) 
+<!-- badges: end -->
+
 Pipeline automatisé de téléchargement, traitement et publication des données SAFRAN-ISBA-MODCOU (SIM2) au format NetCDF pour chaque variable disponible pour l'ensemble de la période de réanalyse depuis [meteo.data.gouv.fr](https://www.data.gouv.fr/datasets/donnees-changement-climatique-sim-quotidienne) vers [Recherche Data Gouv](https://doi.org/10.57745/BAZ12C).
 
 
@@ -11,7 +17,7 @@ Afin d'améliorer la réutilisabilité et en raison d'une accessibilité et d'un
 3. **Découpage** par variable climatique
 4. **Conversion** en NetCDF avec métadonnées
 5. **Reconstruction** des séries temporelles (historical/previous/latest)
-6. **Publication** sur un [dépôt](https://doi.org/10.57745/BAZ12C) de l'entrepôt Recherche Data Gouv.
+6. **Publication** sur un [dépôt de données](https://doi.org/10.57745/BAZ12C) de l'entrepôt Recherche Data Gouv.
 
 *in dev* – Ce projet ajoute aux données d'origine l'évapotranspiration calculée selon la [méthode de Hargreaves](https://doi.org/10.13031/2013.26773) à partir des températures minimales et maximales de la réanalyse SAFRAN afin de continuer de répondre au besoin exprimé dans le cadre du projet [Explore2](https://entrepot.recherche.data.gouv.fr/dataverse/explore2).
 
