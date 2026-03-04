@@ -7,7 +7,10 @@ from art import tprint
 from .clean import clean
 
 
-def create_netcdf(file, CONVERT_DIR, metadata_variables):
+def create_netcdf(file, CONVERT_DIR, METADATA_VARIABLES_FILE):
+    metadata_variables = pd.read_csv(METADATA_VARIABLES_FILE,
+                                     index_col='variable')
+    
     var = file.stem.split('_QUOT_SIM2')[0]
     print(f"\n🌐 Conversion NetCDF: {file.name}")
     print(f"   → variable: {var}")
@@ -94,7 +97,7 @@ def create_netcdf(file, CONVERT_DIR, metadata_variables):
     return output_file
 
 
-def convert(SPLIT_DIR, CONVERT_DIR, metadata_variables,
+def convert(SPLIT_DIR, CONVERT_DIR, METADATA_VARIABLES_FILE,
             splited_files=None):
     """
     Convertit les fichiers Parquet en fichiers NetCDF géoréférencés.
@@ -131,7 +134,7 @@ def convert(SPLIT_DIR, CONVERT_DIR, metadata_variables,
     for i, file in enumerate(splited_files, start=1):
         print(f"\n[{i}/{len(splited_files)}]")
         output_file = create_netcdf(file, CONVERT_DIR,
-                                    metadata_variables)       
+                                    METADATA_VARIABLES_FILE)       
         converted_files.append(output_file)
 
     clean(CONVERT_DIR)

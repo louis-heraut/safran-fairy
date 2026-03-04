@@ -33,26 +33,33 @@ CONFIG_FILE = os.getenv("CONFIG_FILE")
 config = load_config(CONFIG_FILE)
 
 RESOURCES_DIR = Path("resources")
-WELCOME_FILE = RESOURCES_DIR / config['welcome_file']
-METADATA_VARIABLES_FILE = RESOURCES_DIR / config['metadata_variables_file']
-STATE_FILE = config['state_file']
+WELCOME_FILE = RESOURCES_DIR / config['WELCOME_FILE']
+METADATA_VARIABLES_FILE = RESOURCES_DIR / config['METADATA_VARIABLES_FILE']
+STATE_FILE = config['STATE_FILE']
+INDEX_PATH = config['INDEX_PATH']
 
-DOWNLOAD_DIR = config['download_dir']
-RAW_DIR = config['raw_dir']
-SPLIT_DIR = config['split_dir']
-CONVERT_DIR = config['convert_dir']
-OUTPUT_DIR = config['output_dir']
+DOWNLOAD_DIR = config['DOWNLOAD_DIR']
+RAW_DIR = config['RAW_DIR']
+SPLIT_DIR = config['SPLIT_DIR']
+CONVERT_DIR = config['CONVERT_DIR']
+OUTPUT_DIR = config['OUTPUT_DIR']
     
-METEO_BASE_URL = config['meteo_base_url']
-METEO_DATASET_ID = config['meteo_dataset_id']
+METEO_BASE_URL = config['METEO_BASE_URL']
+METEO_DATASET_ID = config['METEO_DATASET_ID']
     
-RDG_BASE_URL = config['rdg_base_url']
-RDG_DATASET_DOI = config['rdg_dataset_doi']
+RDG_BASE_URL = config['RDG_BASE_URL']
+RDG_DATASET_DOI = config['RDG_DATASET_DOI']
 RDG_API_TOKEN = os.getenv("RDG_API_TOKEN")
 
-metadata_variables = pd.read_csv(METADATA_VARIABLES_FILE,
-                                 index_col='variable')
-    
+S3_ENDPOINT = config['OUTPUT_DIR']
+S3_BUCKET = config['OUTPUT_DIR']
+S3_PREFIX = config['OUTPUT_DIR']
+S3_ACCESS_KEY = os.getenv('S3_ACCESS_KEY')
+S3_SECRET_KEY = os.getenv('S3_SECRET_KEY')
+
+S3_REGION = "eu-west-3"
+
+
 # Setup dev mode
 if MODE == "dev":
     try:
@@ -63,7 +70,7 @@ if MODE == "dev":
         pass
 
 
-from safran_fairy import download, decompress, split, convert, merge, upload, publish, clean
+from safran_fairy import download, decompress, split, convert, merge, upload_s3, update_dataverse, publish, clean
 
 
 def main():
@@ -86,11 +93,13 @@ def main():
     parser.add_argument('--merge', action='store_true',
                         help='Fusionne temporellement')
     parser.add_argument('--upload', action='store_true',
-                        help='Upload sur Dataverse')
-    parser.add_argument('--publish', action='store_true',
-                        help='Publie sur Dataverse')
+                        help='Upload sur le S3')
     parser.add_argument('--clean', action='store_true',
                         help='Nettoie les anciennes versions')
+    parser.add_argument('--index', action='store_true',
+                        help="Update le fichier index de Dataverse")
+    parser.add_argument('--publish', action='store_true',
+                        help='Publie sur Dataverse')
 
     # Options
     parser.add_argument('--overwrite',   action='store_true', help='Écrase les fichiers existants sur Dataverse')
@@ -99,8 +108,8 @@ def main():
     args = parser.parse_args()
     
     if not any([args.all, args.download, args.decompress, args.split,
-                args.convert, args.merge, args.upload, args.publish,
-                args.clean, args.process]):
+                args.convert, args.merge, args.upload, args.clean,
+                args.index, args.publish]):
         args.all = True
     
     print_welcome(WELCOME_FILE)
@@ -133,7 +142,7 @@ def main():
     # 4. CONVERSION
     if args.all or args.process or args.convert:
         converted_files = convert(SPLIT_DIR, CONVERT_DIR,
-                                  metadata_variables, splited_files)
+                                  METADATA_VARIABLES_FILE, splited_files)
 
     # 5. MERGE
     if args.all or args.process or args.merge:
@@ -141,14 +150,24 @@ def main():
 
     # 6. UPLOAD
     if args.all or args.upload:
-        not_uploaded = upload(dataset_DOI=RDG_DATASET_DOI,
-                              OUTPUT_DIR=OUTPUT_DIR,
-                              file_paths=merged_files,
-                              overwrite=args.overwrite,
-                              RDG_BASE_URL=RDG_BASE_URL,
-                              RDG_API_TOKEN=RDG_API_TOKEN)
+        # not_uploaded = upload(dataset_DOI=RDG_DATASET_DOI,
+                              # OUTPUT_DIR=OUTPUT_DIR,
+                              # file_paths=merged_files,
+                              # overwrite=args.overwrite,
+                              # RDG_BASE_URL=RDG_BASE_URL,
+                              # RDG_API_TOKEN=RDG_API_TOKEN)
+        not_uploaded = upload_s3(S3_BUCKET=S3_BUCKET,
+                                 S3_PREFIX=S3_PREFIX,
+                                 OUTPUT_DIR=OUTPUT_DIR,
+                                 file_paths=merged_files,
+                                 overwrite=args.overwrite,
+                                 S3_ACCESS_KEY=S3_ACCESS_KEY,
+                                 S3_SECRET_KEY=S3_SECRET_KEY,
+                                 S3_REGION=S3_REGION)
+        
         if not_uploaded:
             sys.exit(1)
+            
         
     # 7. NETTOYAGE
     if args.clean:
@@ -163,14 +182,35 @@ def main():
                         'previous': r'previous-(\d{8})-(\d{8})'})
         
         # Nettoyage Dataverse
-        clean(dataset_DOI=RDG_DATASET_DOI,
+        # clean(dataset_DOI=RDG_DATASET_DOI,
+        #       patterns={'historical': r'historical-(\d{8})-(\d{8})',
+        #                 'latest': r'latest-(\d{8})-(\d{8})',
+        #                 'previous': r'previous-(\d{8})-(\d{8})'},
+        #       RDG_BASE_URL=RDG_BASE_URL,
+        #       RDG_API_TOKEN=RDG_API_TOKEN)
+        clean(S3_BUCKET=S3_BUCKET,
+              S3_PREFIX=S3_PREFIX, 
               patterns={'historical': r'historical-(\d{8})-(\d{8})',
                         'latest': r'latest-(\d{8})-(\d{8})',
                         'previous': r'previous-(\d{8})-(\d{8})'},
-              RDG_BASE_URL=RDG_BASE_URL,
-              RDG_API_TOKEN=RDG_API_TOKEN)
+              S3_ACCESS_KEY=S3_ACCESS_KEY,
+              S3_SECRET_KEY=S3_SECRET_KEY,
+              S3_REGION=S3_REGION)
+
+
+    # 8. UPDATE DATAVERSE
+    if args.all or args.index:
+        update_dataverse_index(OUTPUT_DIR=OUTPUT_DIR,
+                               S3_BUCKET=S3_BUCKET,
+                               S3_PREFIX=S3_PREFIX,
+                               METADATA_VARIABLES_FILE=METADATA_VARIABLES_FILE,
+                               INDEX_PATH=INDEX_PATH,
+                               S3_REGION=S3_REGION,
+                               RDG_DATASET_DOI=RDG_DATASET_DOI,
+                               RDG_BASE_URL=RDG_BASE_URL,
+                               RDG_API_TOKEN=RDG_API_TOKEN)
         
-    # 8. PUBLISH
+    # 9. PUBLISH
     if args.all or args.publish:
         publish(dataset_DOI=RDG_DATASET_DOI,
                 RDG_BASE_URL=RDG_BASE_URL,
