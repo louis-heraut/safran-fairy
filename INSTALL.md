@@ -35,7 +35,9 @@ Remplir avec vos paramètres pour la prod :
 ```bash
 MODE=prod
 CONFIG_FILE=config-prod.json
-RDG_API_TOKEN=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+RDG_API_TOKEN=token_dataverse
+S3_ACCESS_KEY=clé_accès_EC2
+S3_SECRET_KEY=clé_secrète_EC2
 ```
 
 #### 3.2. config.json
@@ -46,12 +48,13 @@ sudo nano config-prod.json
 ```
 Remplir avec vos paramètres pour la prod :
 ```bash
-"state_file": "/var/lib/safran-fairy/download_state.json",
-"download_dir": "/var/lib/safran-fairy/00_data-download",
-"raw_dir": "/var/lib/safran-fairy/01_data-raw",
-"split_dir": "/var/lib/safran-fairy/02_data-split",
-"convert_dir": "/var/lib/safran-fairy/03_data-convert",
-"output_dir": "/var/lib/safran-fairy/04_data-output"
+"STATE_FILE": "/var/lib/safran-fairy/download_state.json",
+"INDEX_PATH": "/var/lib/safran-fairy/data-access.html",
+"DOWNLOAD_DIR": "/var/lib/safran-fairy/00_data-download",
+"RAW_DIR": "/var/lib/safran-fairy/01_data-raw",
+"SPLIT_DIR": "/var/lib/safran-fairy/02_data-split",
+"CONVERT_DIR": "/var/lib/safran-fairy/03_data-convert",
+"OUTPUT_DIR": "/var/lib/safran-fairy/04_data-output"
 ```
 
 ### 4. Installation prod et service systemd
