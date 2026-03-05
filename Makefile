@@ -55,7 +55,7 @@ uninstall-service: ## Désinstalle le service systemd (nécessite sudo)
 update: ## Met à jour le projet depuis git
 	@echo "$(GREEN)Mise à jour du projet...$(NC)"
 	sudo git pull
-	$(PIP) install --upgrade -r requirements.txt
+	sudo $(PIP) install --upgrade -r requirements.txt
 	@echo "$(GREEN)✓ Mise à jour terminée$(NC)"
 
 run-all: ## Exécute le pipeline complet (dev, avec ton user)
