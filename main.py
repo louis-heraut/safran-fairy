@@ -127,7 +127,6 @@ def main():
                                      METEO_BASE_URL, METEO_DATASET_ID)
         if not downloaded_files and args.download:
             print("\n✨ Rien de nouveau à télécharger!")
-            if not args.all:
                 return
 
     # 2. DÉCOMPRESSION

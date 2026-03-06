@@ -103,9 +103,9 @@ run-as-service: ## Exécute comme le ferait le service systemd (nécessite sudo)
 	sudo -u safran-fairy /opt/safran-fairy/.python_env/bin/python /opt/safran-fairy/main.py --all
 
 service-stop: ## Stoppe le run en cours (le timer reste actif)
-	@echo "$(YELLOW)Arrêt du run en cours...$(NC)"
+	@echo "$(YELLOW)Arrêt du service...$(NC)"
 	sudo systemctl stop safran-sync.service
-	@echo "$(GREEN)✓ Run arrêté (le timer relancera à 2h00)$(NC)"
+	@echo "$(GREEN)✓ Service stoppé$(NC)"
 
 service-restart: ## Relance immédiatement le service sans attendre le timer
 	@echo "$(GREEN)Relance immédiate du service...$(NC)"
