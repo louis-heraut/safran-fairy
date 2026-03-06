@@ -112,6 +112,11 @@ service-restart: ## Relance immédiatement le service sans attendre le timer
 	sudo systemctl start safran-sync.service
 	@echo "$(GREEN)✓ Service relancé$(NC)"
 
+service-restart-timer: ## Relance le timer
+	@echo "$(GREEN)Relance du timer du service...$(NC)"
+	sudo systemctl start safran-sync.timer
+	@echo "$(GREEN)✓ Timer relancé$(NC)"
+
 service-status: ## Affiche le statut du service systemd
 	@echo "$(GREEN)Statut du service :$(NC)"
 	@sudo systemctl status safran-sync.timer --no-pager || true

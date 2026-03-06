@@ -130,7 +130,7 @@ def upload_dataverse_index(INDEX_PATH: str,
 
     # Upload
     url = f"{RDG_BASE_URL}/api/datasets/:persistentId/add?persistentId={RDG_DATASET_DOI}"
-    json_data = {"description": "Index des fichiers disponibles sur S3", 
+    json_data = {"description": "Index des fichiers disponibles", 
                  "restrict": "false", 
                  "tabIngest": "false"}  # important : pas d'ingest pour un HTML
 
