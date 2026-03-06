@@ -125,6 +125,10 @@ def main():
     if args.all or args.download:
         downloaded_files =  download(STATE_FILE, DOWNLOAD_DIR,
                                      METEO_BASE_URL, METEO_DATASET_ID)
+
+        print(downloaded_files)
+        print(args.download)
+        
         if not downloaded_files and args.download:
             print("\n✨ Rien de nouveau à télécharger!")
             return
